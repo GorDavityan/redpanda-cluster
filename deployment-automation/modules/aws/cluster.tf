@@ -1,9 +1,9 @@
 resource "random_uuid" "cluster" {
-   count = var.random_uuid ? 1 : 0
+  count = var.redpanda_cluster ? 1 : 0
 }
 
 resource "time_static" "timestamp" {
-   count = var.time_static ? 1 : 0
+  count = var.redpanda_cluster ? 1 : 0
 }
 
 locals {
@@ -22,7 +22,7 @@ locals {
 }
 
 resource "aws_iam_policy" "redpanda" {
-  count = var.tiered_storage_enabled ? 1 : 0
+  count = var.redpanda_cluster ? 1 : 0
   name  = local.deployment_id
   path  = "/"
   policy = jsonencode({
@@ -43,7 +43,7 @@ resource "aws_iam_policy" "redpanda" {
 }
 
 resource "aws_iam_role" "redpanda" {
-  count = var.tiered_storage_enabled ? 1 : 0
+  count = var.redpanda_cluster ? 1 : 0
   name  = local.deployment_id
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -61,21 +61,21 @@ resource "aws_iam_role" "redpanda" {
 }
 
 resource "aws_iam_policy_attachment" "redpanda" {
-  count      = var.tiered_storage_enabled ? 1 : 0
+  count      = var.redpanda_cluster ? 1 : 0
   name       = local.deployment_id
   roles      = [aws_iam_role.redpanda[count.index].name]
   policy_arn = aws_iam_policy.redpanda[count.index].arn
 }
 
 resource "aws_iam_instance_profile" "redpanda" {
-  count = var.tiered_storage_enabled ? 1 : 0
+  count = var.redpanda_cluster ? 1 : 0
   name  = local.deployment_id
   role  = aws_iam_role.redpanda[count.index].name
 }
 
 
 resource "aws_instance" "redpanda" {
-  count                      = var.nodes ? 3 : 0
+  count                      = var.redpanda_cluster ? 3 : 0
   ami                        = coalesce(var.cluster_ami, data.aws_ami.ami.image_id)
   instance_type              = var.instance_type
   key_name                   = aws_key_pair.ssh.key_name
@@ -104,7 +104,7 @@ resource "aws_instance" "redpanda" {
 }
 
 resource "aws_ebs_volume" "ebs_volume" {
-  count             = var.nodes ? 3 : 0 * var.ec2_ebs_volume_count
+  count             = var.redpanda_cluster ? 3 : 0 * var.ec2_ebs_volume_count
   availability_zone = aws_instance.redpanda[*].availability_zone[count.index]
   size              = var.ec2_ebs_volume_size
   type              = var.ec2_ebs_volume_type
@@ -113,14 +113,14 @@ resource "aws_ebs_volume" "ebs_volume" {
 }
 
 resource "aws_volume_attachment" "volume_attachment" {
-  count       = var.nodes ? 3 : 0 * var.ec2_ebs_volume_count
+  count       = var.redpanda_cluster ? 3 : 0 * var.ec2_ebs_volume_count
   volume_id   = aws_ebs_volume.ebs_volume[*].id[count.index]
   device_name = var.ec2_ebs_device_names[count.index]
   instance_id = aws_instance.redpanda[*].id[count.index]
 }
 
 resource "aws_instance" "prometheus" {
-  count                  = var.enable_monitoring ? 1 : 0
+  count                  = var.redpanda_cluster ? 1 : 0
   ami                    = coalesce(var.prometheus_ami, data.aws_ami.ami.image_id)
   instance_type          = var.prometheus_instance_type
   key_name               = aws_key_pair.ssh.key_name
@@ -145,7 +145,7 @@ resource "aws_instance" "prometheus" {
 }
 
 resource "aws_instance" "client" {
-  count                  = var.clients ? 1 : 0
+  count                  = var.redpanda_cluster ? 1 : 0
   ami                    = coalesce(var.client_ami, data.aws_ami.ami.image_id)
   instance_type          = var.client_instance_type
   key_name               = aws_key_pair.ssh.key_name
@@ -170,11 +170,11 @@ resource "aws_instance" "client" {
 }
 
 resource "aws_security_group" "node_sec_group" {
-  count                  = var.sg ? 1 : 0
+  count       = var.redpanda_cluster ? 1 : 0
   name        = "${local.deployment_id}-node-sec-group"
   tags        = local.merged_tags
   description = "redpanda ports"
-  vpc_id      = var.vpc_id
+  vpc_id      = module.vpc.vpc_id
 
   # SSH access from anywhere
   ingress {
@@ -263,19 +263,19 @@ resource "aws_placement_group" "redpanda-pg" {
   strategy        = "partition"
   partition_count = 3
   tags            = local.merged_tags
-  count           = var.ha ? 1 : 0
+  count           = var.redpanda_cluster ? 1 : 0
 }
 
 
 resource "aws_key_pair" "ssh" {
-  count           = var.ssh ? 1 : 0
+  count      = var.redpanda_cluster ? 1 : 0
   key_name   = "${local.deployment_id}-key"
   public_key = file(var.public_key_path)
   tags       = local.merged_tags
 }
 
 resource "local_file" "hosts_ini_for_ci" {
-  count           = var.local_file ? 1 : 0
+  count = var.redpanda_cluster ? 1 : 0
   content = templatefile("${path.module}/../templates/hosts_ini.tpl",
     {
       cloud_storage_region       = var.aws_region
@@ -299,7 +299,7 @@ resource "local_file" "hosts_ini_for_ci" {
 
 ## TODO remove this and update docs accordingly
 resource "local_file" "hosts_ini" {
-  count           = var.local_file_ci ? 1 : 0
+  count = var.redpanda_cluster ? 1 : 0
   content = templatefile("${path.module}/../templates/hosts_ini.tpl",
     {
       cloud_storage_region       = var.aws_region

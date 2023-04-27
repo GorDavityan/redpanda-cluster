@@ -1,26 +1,38 @@
-variable "random_uuid" {
-  description = "random uuid"
+variable "redpanda_cluster" {
+  description = "create or not redpanda cluster"
   type        = bool
   default     = true
 }
 
-variable "time_static" {
-  description = "time static"
-  type        = bool
-  default     = true
+variable "cidr" {
+  type        = string
+  default     = "10.0.0.0/16"
+  description = "cidr block"
 }
+
+# variable "random_uuid" {
+#   description = "random uuid"
+#   type        = bool
+#   default     = true
+# }
+
+# variable "time_static" {
+#   description = "time static"
+#   type        = bool
+#   default     = true
+# }
 
 variable "aws_region" {
   type        = string
   description = "The AWS region to deploy the infrastructure on"
-#  default     = "us-west-2"
+  default     = "us-west-2"
 }
 
-variable "clients" {
-  description = "Number of client hosts     esi vor vm lini vorpes producer u consumer lini masaagner xrgi"
-  type        = bool
-  default     = true
-}
+# variable "clients" {
+#   description = "Number of client hosts     esi vor vm lini vorpes producer u consumer lini masaagner xrgi"
+#   type        = bool
+#   default     = true
+# }
 
 variable "availability_zone" {
   description = "The AWS AZ to deploy the infrastructure on"
@@ -28,29 +40,29 @@ variable "availability_zone" {
   type        = list(string)
 }
 
-variable "sg" {
-  description = "security group"
-  type        = bool
-  default     = true
-}
+# variable "sg" {
+#   description = "security group"
+#   type        = bool
+#   default     = true
+# }
 
-variable "ssh" {
-  description = "security group"
-  type        = bool
-  default     = false
-}
+# variable "ssh" {
+#   description = "security group"
+#   type        = bool
+#   default     = false
+# }
 
-variable "local_file" {
-  description = "security group"
-  type        = bool
-  default     = true
-}
+# variable "local_file" {
+#   description = "security group"
+#   type        = bool
+#   default     = true
+# }
 
-variable "local_file_ci" {
-  description = "security group"
-  type        = bool
-  default     = true
-}
+# variable "local_file_ci" {
+#   description = "security group"
+#   type        = bool
+#   default     = true
+# }
 
 variable "client_distro" {
   type        = string
@@ -76,11 +88,11 @@ variable "distro" {
   default     = "ubuntu-focal"
 }
 
-variable "enable_monitoring" {
-  description = "Setup a prometheus/grafana instance"
-  type        = bool
-  default     = true
-}
+# variable "enable_monitoring" {
+#   description = "Setup a prometheus/grafana instance"
+#   type        = bool
+#   default     = true
+# }
 
 ## It is important that device names do not get duplicated on hosts, in rare circumstances the choice of nodes * volumes can result in a factor that causes duplication. Modify this field so there is not a common factor.
 ## Please pr a more elegant solution if you have one.
@@ -147,11 +159,11 @@ variable "ec2_ebs_volume_type" {
   default     = "gp3"
 }
 
-variable "ha" {
-  description = "Whether to use placement groups to create an HA topology          highly available lini Enable high availability, which ensures each node is on a separate rack and the cluster is rack-aware  "
-  type        = bool
-  default     = false
-}
+# variable "ha" {
+#   description = "Whether to use placement groups to create an HA topology          highly available lini Enable high availability, which ensures each node is on a separate rack and the cluster is rack-aware  "
+#   type        = bool
+#   default     = false
+# }
 
 variable "instance_type" {
   type        = string
@@ -165,11 +177,11 @@ variable "machine_architecture" {
   default     = "x86_64"
 }
 
-variable "nodes" {
-  description = "nodes"
-  type        = bool
-  default     = true
-}
+# variable "nodes" {
+#   description = "nodes"
+#   type        = bool
+#   default     = true
+# }
 
 variable "prometheus_instance_type" {
   type        = string
@@ -256,11 +268,11 @@ variable "distro_ssh_user" {
   }
 }
 
-variable "tiered_storage_enabled" {
-  description = "Enables or disables tiered storage"
-  type        = bool
-  default     = true
-}
+# variable "tiered_storage_enabled" {
+#   description = "Enables or disables tiered storage"
+#   type        = bool
+#   default     = true
+# }
 
 variable "private_key_path" {
   type        = string
@@ -305,11 +317,11 @@ variable "tags" {
   default     = null
 }
 
-variable "vpc_id" {
-  type        = string
-  description = "The ID of the VPC to deploy the instances. If an ID is an empty string, the default VPC is used. If provided, the subnet_id must also be provided."
-  default     = ""
-}
+# variable "vpc_id" {
+#   type        = string
+#   description = "The ID of the VPC to deploy the instances. If an ID is an empty string, the default VPC is used. If provided, the subnet_id must also be provided."
+#   default     = ""
+# }
 
 variable "cloud_provider" {
   type        = string
