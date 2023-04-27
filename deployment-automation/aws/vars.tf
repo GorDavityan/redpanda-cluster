@@ -1,7 +1,25 @@
+variable "random_uuid" {
+  description = "random uuid"
+  type        = bool
+  default     = true
+}
+
+variable "time_static" {
+  description = "time static"
+  type        = bool
+  default     = true
+}
+
 variable "aws_region" {
   type        = string
   description = "The AWS region to deploy the infrastructure on"
-  default     = "us-west-2"
+#  default     = "us-west-2"
+}
+
+variable "clients" {
+  description = "Number of client hosts     esi vor vm lini vorpes producer u consumer lini masaagner xrgi"
+  type        = bool
+  default     = true
 }
 
 variable "availability_zone" {
@@ -10,10 +28,28 @@ variable "availability_zone" {
   type        = list(string)
 }
 
-variable "clients" {
-  description = "Number of client hosts"
-  type        = number
-  default     = 0
+variable "sg" {
+  description = "security group"
+  type        = bool
+  default     = true
+}
+
+variable "ssh" {
+  description = "security group"
+  type        = bool
+  default     = false
+}
+
+variable "local_file" {
+  description = "security group"
+  type        = bool
+  default     = true
+}
+
+variable "local_file_ci" {
+  description = "security group"
+  type        = bool
+  default     = true
 }
 
 variable "client_distro" {
@@ -83,7 +119,7 @@ variable "ec2_ebs_device_names" {
 
 variable "ec2_ebs_volume_count" {
   type        = number
-  description = "Number of EBS volumes to attach to each Redpanda node"
+  description = "Number of EBS volumes to attach to each Redpanda node       esi default@ arji 1 dnel"
   default     = 0
 }
 
@@ -112,7 +148,7 @@ variable "ec2_ebs_volume_type" {
 }
 
 variable "ha" {
-  description = "Whether to use placement groups to create an HA topology"
+  description = "Whether to use placement groups to create an HA topology          highly available lini Enable high availability, which ensures each node is on a separate rack and the cluster is rack-aware  "
   type        = bool
   default     = false
 }
@@ -130,9 +166,9 @@ variable "machine_architecture" {
 }
 
 variable "nodes" {
-  description = "The number of nodes to deploy"
-  type        = number
-  default     = "3"
+  description = "nodes"
+  type        = bool
+  default     = true
 }
 
 variable "prometheus_instance_type" {
@@ -223,7 +259,7 @@ variable "distro_ssh_user" {
 variable "tiered_storage_enabled" {
   description = "Enables or disables tiered storage"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "private_key_path" {
