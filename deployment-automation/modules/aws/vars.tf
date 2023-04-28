@@ -34,6 +34,12 @@ variable "aws_region" {
   default     = "us-west-2"
 }
 
+variable "vpc_tag" {
+  type        = string
+  description = "vpc tag"
+  default     = "redpanda_vpc"
+}
+
 # variable "clients" {
 #   description = "Number of client hosts     esi vor vm lini vorpes producer u consumer lini masaagner xrgi"
 #   type        = bool
@@ -94,11 +100,11 @@ variable "distro" {
   default     = "ubuntu-focal"
 }
 
-# variable "enable_monitoring" {
-#   description = "Setup a prometheus/grafana instance"
-#   type        = bool
-#   default     = true
-# }
+variable "enable_monitoring" {
+  description = "Setup a prometheus/grafana instance"
+  type        = bool
+  default     = true
+}
 
 ## It is important that device names do not get duplicated on hosts, in rare circumstances the choice of nodes * volumes can result in a factor that causes duplication. Modify this field so there is not a common factor.
 ## Please pr a more elegant solution if you have one.
@@ -165,11 +171,11 @@ variable "ec2_ebs_volume_type" {
   default     = "gp3"
 }
 
-# variable "ha" {
-#   description = "Whether to use placement groups to create an HA topology          highly available lini Enable high availability, which ensures each node is on a separate rack and the cluster is rack-aware  "
-#   type        = bool
-#   default     = false
-# }
+variable "ha" {
+  description = "Whether to use placement groups to create an HA topology          highly available lini Enable high availability, which ensures each node is on a separate rack and the cluster is rack-aware  "
+  type        = bool
+  default     = false
+}
 
 variable "instance_type" {
   type        = string
@@ -274,11 +280,11 @@ variable "distro_ssh_user" {
   }
 }
 
-# variable "tiered_storage_enabled" {
-#   description = "Enables or disables tiered storage"
-#   type        = bool
-#   default     = true
-# }
+variable "tiered_storage_enabled" {
+  description = "Enables or disables tiered storage"
+  type        = bool
+  default     = true
+}
 
 variable "private_key_path" {
   type        = string

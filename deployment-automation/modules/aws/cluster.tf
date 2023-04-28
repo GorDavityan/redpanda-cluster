@@ -120,7 +120,7 @@ resource "aws_volume_attachment" "volume_attachment" {
 }
 
 resource "aws_instance" "prometheus" {
-  count                  = var.redpanda_cluster ? 1 : 0
+  count                  = var.enable_monitoring ? 1 : 0
   ami                    = coalesce(var.prometheus_ami, data.aws_ami.ami.image_id)
   instance_type          = var.prometheus_instance_type
   key_name               = aws_key_pair.ssh.key_name
