@@ -3,7 +3,7 @@ module "vpc" {
   version = "4.0.1"
   name    = "redpanda_vpc"
   cidr    = var.cidr
-  count   = var.redpanda_cluster ? 1 : 0
+  count   = var.vpc ? 1 : 0
 
 
   azs = data.aws_availability_zones.available.names
