@@ -1,9 +1,9 @@
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "4.0.1"
-  name    = "redpanda_vpc"
+  name    = "redpanda_and_clickhouse_vpc"
   cidr    = var.cidr
-  count   = var.vpc ? 1 : 0
+  count   = var.redpanda_cluster || var.clickhouse_cluster ? 1 : 0
 
 
   azs = data.aws_availability_zones.available.names

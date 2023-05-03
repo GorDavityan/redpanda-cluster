@@ -1,0 +1,35 @@
+{
+ "collection_info": {
+  "namespace": "redpanda",
+  "name": "cluster",
+  "version": "0.0.7",
+  "authors": [
+   "Devex Team devex@redpanda.com"
+  ],
+  "readme": "README.md",
+  "tags": [
+   "redpanda",
+   "redpanda_data",
+   "data",
+   "redpanda_cluster",
+   "kafka",
+   "apache_kafka"
+  ],
+  "description": "Redpanda Ansible Collection",
+  "license": [],
+  "license_file": "LICENSE",
+  "dependencies": {},
+  "repository": "https://github.com/redpanda-data/deployment-automation",
+  "documentation": "https://docs.redpanda.com/docs/home",
+  "homepage": "https://redpanda.com/",
+  "issues": "https://github.com/redpanda-data/deployment-automation/issues"
+ },
+ "file_manifest_file": {
+  "name": "FILES.json",
+  "ftype": "file",
+  "chksum_type": "sha256",
+  "chksum_sha256": "c91a32eb775e94b2a35c2ffb02bab3045da60b2effacdb7fa5301bd40f22984b",
+  "format": 1
+ },
+ "format": 1
+}

@@ -1,0 +1,41 @@
+- hosts: clickhouse
+  tasks:
+    - name: Install and Set up Repositories
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - dirmngr
+        state: present
+
+    - name: Import ClickHouse GPG key
+      ansible.builtin.command:
+        cmd: sh -c 'GNUPGHOME=$(mktemp -d) && export GNUPGHOME="$GNUPGHOME" && gpg --no-default-keyring --keyring /usr/share/keyrings/clickhouse-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8919F6BD2B48D754 && rm -r "$GNUPGHOME"'
+
+    - name: Add ClickHouse repository
+      ansible.builtin.copy:
+        content: "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main"
+        dest: /etc/apt/sources.list.d/clickhouse.list
+     
+    - name:  Update package repositories
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Installing ClickHouse
+      ansible.builtin.apt:
+        name:
+          - clickhouse-server
+          - clickhouse-client
+        state: present
+    
+    - name: Starting ClickHouse Service
+      ansible.builtin.service:
+        name: clickhouse-server
+        state: started
+        enabled: yes
+
+    - name: Add Config file
+      ansible.builtin.copy:
+        src: config.xml
+        dest: /etc/clickhouse-server/config.xml
+     

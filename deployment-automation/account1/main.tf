@@ -27,6 +27,6 @@ provider "aws" {
 module "cluster_dev" {
   source            = "../modules/aws"
   redpanda_cluster  = true
-  enable_monitoring = true
-  vpc               = true
+  clickhouse_cluster = false
+  enable_monitoring = false
 }

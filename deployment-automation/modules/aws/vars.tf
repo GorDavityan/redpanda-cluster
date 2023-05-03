@@ -4,10 +4,10 @@ variable "redpanda_cluster" {
   default     = true
 }
 
-variable "vpc" {
-  description = "create or not vpc"
+variable "clickhouse_cluster" {
+  description = "create or not clickhouse cluster"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "cidr" {
@@ -16,18 +16,6 @@ variable "cidr" {
   description = "cidr block"
 }
 
-# variable "random_uuid" {
-#   description = "random uuid"
-#   type        = bool
-#   default     = true
-# }
-
-# variable "time_static" {
-#   description = "time static"
-#   type        = bool
-#   default     = true
-# }
-
 variable "aws_region" {
   type        = string
   description = "The AWS region to deploy the infrastructure on"
@@ -35,51 +23,23 @@ variable "aws_region" {
 }
 
 variable "vpc_tag" {
-  type        = string
+  type        = map(string)
   description = "vpc tag"
-  default     = "redpanda_vpc"
+  default = {
+    "vpc" = "redpanda"
+  }
 }
-
-# variable "clients" {
-#   description = "Number of client hosts     esi vor vm lini vorpes producer u consumer lini masaagner xrgi"
-#   type        = bool
-#   default     = true
-# }
 
 variable "availability_zone" {
   description = "The AWS AZ to deploy the infrastructure on"
-  default     = ["us-west-2a"]
+  default     = ["us-west-2a", "us-west-2b", "us-west-2c"]
   type        = list(string)
 }
-
-# variable "sg" {
-#   description = "security group"
-#   type        = bool
-#   default     = true
-# }
-
-# variable "ssh" {
-#   description = "security group"
-#   type        = bool
-#   default     = false
-# }
-
-# variable "local_file" {
-#   description = "security group"
-#   type        = bool
-#   default     = true
-# }
-
-# variable "local_file_ci" {
-#   description = "security group"
-#   type        = bool
-#   default     = true
-# }
 
 variable "client_distro" {
   type        = string
   description = "Linux distribution to use for clients."
-  default     = "ubuntu-focal"
+  default     = "ubuntu-jammy"
 }
 
 variable "client_instance_type" {
@@ -97,7 +57,7 @@ variable "deployment_prefix" {
 variable "distro" {
   type        = string
   description = "The default distribution to base the cluster on"
-  default     = "ubuntu-focal"
+  default     = "ubuntu-jammy"
 }
 
 variable "enable_monitoring" {
@@ -174,7 +134,7 @@ variable "ec2_ebs_volume_type" {
 variable "ha" {
   description = "Whether to use placement groups to create an HA topology          highly available lini Enable high availability, which ensures each node is on a separate rack and the cluster is rack-aware  "
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "instance_type" {
@@ -183,17 +143,17 @@ variable "instance_type" {
   default     = "i3.2xlarge"
 }
 
+variable "clickhouse_instance_type" {
+  type        = string
+  description = "Default redpanda instance type to create"
+  default     = "m5n.4xlarge"
+}
+
 variable "machine_architecture" {
   type        = string
   description = "Architecture used for selecting the AMI - change this if using ARM based instances"
   default     = "x86_64"
 }
-
-# variable "nodes" {
-#   description = "nodes"
-#   type        = bool
-#   default     = true
-# }
 
 variable "prometheus_instance_type" {
   type        = string
@@ -289,7 +249,7 @@ variable "tiered_storage_enabled" {
 variable "private_key_path" {
   type        = string
   description = "The contents of an SSH key to use for the connection. These can be loaded from a file on disk using the file function. This takes preference over password if provided."
-  default     = null
+  default     = "~/.ssh/id_rsa"
 }
 
 variable "security_groups_client" {
@@ -310,6 +270,12 @@ variable "security_groups_redpanda" {
   default     = []
 }
 
+variable "security_groups_clickhouse" {
+  type        = list(string)
+  description = "Any additional security groups to attach to the ClickHouse nodes"
+  default     = []
+}
+
 variable "ssh_security_rule_cidr" {
   type        = list(string)
   description = "List of CIDRs for the security group's SSH ingress rule. Defaults to 0.0.0.0/0 if not specified."
@@ -318,7 +284,7 @@ variable "ssh_security_rule_cidr" {
 
 variable "subnet_id" {
   type        = string
-  description = "The ID ID of the subnet where the EC2 instances will be deployed. An empty string will deploy to the default VPC. If provided, it must be in the same VPC as vpc_id"
+  description = "The ID of the subnet where the EC2 instances will be deployed. An empty string will deploy to the default VPC. If provided, it must be in the same VPC as vpc_id"
   default     = ""
 }
 
@@ -339,4 +305,18 @@ variable "cloud_provider" {
   type        = string
   description = "the short, lower case form of the cloud provider"
   default     = "aws"
+}
+
+# allow_force_destroy is only intended for demos and CI testing and to support decommissioning a cluster entirely
+# enabling it will result in loss of any data or topic info stored in the bucket
+variable "allow_force_destroy" {
+  default     = false
+  type        = bool
+  description = "DANGER: Enabling this option will delete your data in Tiered Storage when terraform destroy is run. Enable this only after careful consideration of the data loss consequences."
+}
+
+variable "associate_public_ip_addr" {
+  default     = true
+  type        = bool
+  description = "Allows enabling public ips when using a custom VPC rather than the default"
 }

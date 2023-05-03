@@ -1,15 +1,17 @@
 resource "random_uuid" "cluster" {
-  count = var.redpanda_cluster ? 1 : 0
+  count = var.redpanda_cluster || var.clickhouse_cluster ? 1 : 0
 }
 
 resource "time_static" "timestamp" {
-  count = var.redpanda_cluster ? 1 : 0
+  count = var.redpanda_cluster || var.clickhouse_cluster ? 1 : 0
 }
 
 locals {
-  uuid                       = random_uuid.cluster.result
-  timestamp                  = time_static.timestamp.unix
+  uuid                       = length(random_uuid.cluster) > 0 ? random_uuid.cluster[0].result : 0
+  timestamp                  = length(time_static.timestamp) > 0 ? time_static.timestamp[0].unix : 0
   deployment_id              = length(var.deployment_prefix) > 0 ? var.deployment_prefix : "redpanda-${substr(local.uuid, 0, 8)}-${local.timestamp}"
+  clickhouse_deployment_id   = length(var.deployment_prefix) > 0 ? var.deployment_prefix : "clickhouse-${substr(local.uuid, 0, 8)}-${local.timestamp}"
+
   tiered_storage_bucket_name = replace("${local.deployment_id}-bucket", "_", "-")
 
   # tags shared by all instances
@@ -75,22 +77,27 @@ resource "aws_iam_instance_profile" "redpanda" {
 
 
 resource "aws_instance" "redpanda" {
-  count                      = var.redpanda_cluster ? 3 : 0
+  count                      = var.redpanda_cluster ? 5 : 0
   ami                        = coalesce(var.cluster_ami, data.aws_ami.ami.image_id)
   instance_type              = var.instance_type
-  key_name                   = aws_key_pair.ssh.key_name
+  key_name                   = aws_key_pair.ssh[0].key_name
   iam_instance_profile       = var.tiered_storage_enabled ? aws_iam_instance_profile.redpanda[0].name : null
-  vpc_security_group_ids     = concat([aws_security_group.node_sec_group.id], var.security_groups_redpanda)
+  vpc_security_group_ids     = concat([aws_security_group.node_sec_group[0].id], var.security_groups_redpanda)
   placement_group            = var.ha ? aws_placement_group.redpanda-pg[0].id : null
   placement_partition_number = var.ha ? (count.index % aws_placement_group.redpanda-pg[0].partition_count) + 1 : null
   availability_zone          = var.availability_zone[count.index % length(var.availability_zone)]
-  subnet_id                  = var.subnet_id
+  subnet_id                  = module.vpc[0].public_subnets[0]
+  associate_public_ip_address = var.associate_public_ip_addr
   tags = merge(
     local.merged_tags,
     {
       Name = "${local.deployment_id}-node-${count.index}",
     }
   )
+
+   provisioner "local-exec" {
+    command = "sleep 60 && ansible-playbook --private-key ~/.ssh/id_rsa -i ../hosts.ini -v ansible/provision-node.yml"
+  }
 
   connection {
     user        = var.distro_ssh_user[var.distro]
@@ -104,8 +111,8 @@ resource "aws_instance" "redpanda" {
 }
 
 resource "aws_ebs_volume" "ebs_volume" {
-  count             = var.redpanda_cluster ? 3 : 0 * var.ec2_ebs_volume_count
-  availability_zone = aws_instance.redpanda[*].availability_zone[count.index]
+  count             = var.redpanda_cluster ? 0 : 0 * var.ec2_ebs_volume_count
+  availability_zone = aws_instance.redpanda[0].availability_zone
   size              = var.ec2_ebs_volume_size
   type              = var.ec2_ebs_volume_type
   iops              = var.ec2_ebs_volume_iops
@@ -113,25 +120,30 @@ resource "aws_ebs_volume" "ebs_volume" {
 }
 
 resource "aws_volume_attachment" "volume_attachment" {
-  count       = var.redpanda_cluster ? 3 : 0 * var.ec2_ebs_volume_count
-  volume_id   = aws_ebs_volume.ebs_volume[*].id[count.index]
+  count       = var.redpanda_cluster ? 0 : 0 * var.ec2_ebs_volume_count
+  volume_id   = join(",", aws_ebs_volume.ebs_volume[*].id)
   device_name = var.ec2_ebs_device_names[count.index]
-  instance_id = aws_instance.redpanda[*].id[count.index]
+  instance_id = join(",", aws_instance.redpanda[*].id)
 }
 
 resource "aws_instance" "prometheus" {
   count                  = var.enable_monitoring ? 1 : 0
   ami                    = coalesce(var.prometheus_ami, data.aws_ami.ami.image_id)
   instance_type          = var.prometheus_instance_type
-  key_name               = aws_key_pair.ssh.key_name
-  subnet_id              = var.subnet_id
-  vpc_security_group_ids = concat([aws_security_group.node_sec_group.id], var.security_groups_prometheus)
+  key_name               = aws_key_pair.ssh[0].key_name
+  subnet_id              = module.vpc[0].public_subnets[0]
+  vpc_security_group_ids = concat([aws_security_group.node_sec_group[0].id], var.security_groups_prometheus)
+  associate_public_ip_address = var.associate_public_ip_addr
   tags = merge(
     local.merged_tags,
     {
       Name = "${local.deployment_id}-prometheus",
     }
   )
+
+   provisioner "local-exec" {
+    command = "sleep 60 && ansible-playbook --private-key ~/.ssh/id_rsa -i ../hosts.ini -v ansible/deploy-prometheus-grafana.yml"
+  }
 
   connection {
     user        = var.distro_ssh_user[var.distro]
@@ -145,12 +157,13 @@ resource "aws_instance" "prometheus" {
 }
 
 resource "aws_instance" "client" {
-  count                  = var.redpanda_cluster ? 1 : 0
+  count                  = var.redpanda_cluster ? 0 : 0
   ami                    = coalesce(var.client_ami, data.aws_ami.ami.image_id)
   instance_type          = var.client_instance_type
-  key_name               = aws_key_pair.ssh.key_name
-  subnet_id              = var.subnet_id
-  vpc_security_group_ids = concat([aws_security_group.node_sec_group.id], var.security_groups_client)
+  key_name               = aws_key_pair.ssh[0].key_name
+  subnet_id              = module.vpc[0].public_subnets[0]
+  vpc_security_group_ids = concat([aws_security_group.node_sec_group[0].id], var.security_groups_client)
+  associate_public_ip_address = var.associate_public_ip_addr
   tags = merge(
     local.merged_tags,
     {
@@ -174,7 +187,7 @@ resource "aws_security_group" "node_sec_group" {
   name        = "${local.deployment_id}-node-sec-group"
   tags        = local.merged_tags
   description = "redpanda ports"
-  vpc_id      = module.vpc.vpc_id
+  vpc_id      = module.vpc[0].vpc_id
 
   # SSH access from anywhere
   ingress {
@@ -268,15 +281,15 @@ resource "aws_placement_group" "redpanda-pg" {
 
 
 resource "aws_key_pair" "ssh" {
-  count      = var.redpanda_cluster ? 1 : 0
+  count      = var.redpanda_cluster || var.clickhouse_cluster ? 1 : 0
   key_name   = "${local.deployment_id}-key"
   public_key = file(var.public_key_path)
   tags       = local.merged_tags
 }
 
 resource "local_file" "hosts_ini_for_ci" {
-  count = var.redpanda_cluster ? 1 : 0
-  content = templatefile("${path.module}/../templates/hosts_ini.tpl",
+  count = var.redpanda_cluster || var.clickhouse_cluster ? 1 : 0
+  content = templatefile("${path.module}/../../templates/hosts_ini.tpl",
     {
       cloud_storage_region       = var.aws_region
       client_public_ips          = aws_instance.client[*].public_ip
@@ -289,18 +302,20 @@ resource "local_file" "hosts_ini_for_ci" {
       availability_zone          = aws_instance.redpanda[*].availability_zone
       redpanda_public_ips        = aws_instance.redpanda[*].public_ip
       redpanda_private_ips       = aws_instance.redpanda[*].private_ip
+      clickhouse_public_ips        = aws_instance.clickhouse[*].public_ip
+      clickhouse_private_ips       = aws_instance.clickhouse[*].private_ip
       ssh_user                   = var.distro_ssh_user[var.distro]
       tiered_storage_bucket_name = local.tiered_storage_bucket_name
       tiered_storage_enabled     = var.tiered_storage_enabled
     }
   )
-  filename = "${path.module}/../artifacts/hosts_${var.cloud_provider}_${var.deployment_prefix}.ini"
+  filename = "${path.module}/../../artifacts/hosts_${var.cloud_provider}_${var.deployment_prefix}.ini"
 }
 
 ## TODO remove this and update docs accordingly
 resource "local_file" "hosts_ini" {
-  count = var.redpanda_cluster ? 1 : 0
-  content = templatefile("${path.module}/../templates/hosts_ini.tpl",
+  count = var.redpanda_cluster || var.clickhouse_cluster ? 1 : 0
+  content = templatefile("${path.module}/../../templates/hosts_ini.tpl",
     {
       cloud_storage_region       = var.aws_region
       client_public_ips          = aws_instance.client[*].public_ip
@@ -313,12 +328,14 @@ resource "local_file" "hosts_ini" {
       availability_zone          = aws_instance.redpanda[*].availability_zone
       redpanda_public_ips        = aws_instance.redpanda[*].public_ip
       redpanda_private_ips       = aws_instance.redpanda[*].private_ip
+      clickhouse_public_ips        = aws_instance.clickhouse[*].public_ip
+      clickhouse_private_ips       = aws_instance.clickhouse[*].private_ip
       ssh_user                   = var.distro_ssh_user[var.distro]
       tiered_storage_bucket_name = local.tiered_storage_bucket_name
       tiered_storage_enabled     = var.tiered_storage_enabled
     }
   )
-  filename = "${path.module}/../hosts.ini"
+  filename = "${path.module}/../../hosts.ini"
 }
 
 locals {

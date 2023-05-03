@@ -26,19 +26,19 @@ output "prometheus_id" {
   }
 }
 
-output "client" {
-  value = {
-    for instance in aws_instance.client :
-    instance.public_ip => instance.private_ip...
-  }
-}
+# output "client" {
+#   value = {
+#     for instance in aws_instance.client :
+#     instance.public_ip => instance.private_ip...
+#   }
+# }
 
-output "client_id" {
-  value = {
-    for instance in aws_instance.client :
-    "instance_id" => instance.id...
-  }
-}
+# output "client_id" {
+#   value = {
+#     for instance in aws_instance.client :
+#     "instance_id" => instance.id...
+#   }
+# }
 
 output "ssh_user" {
   value = var.distro_ssh_user[var.distro]
