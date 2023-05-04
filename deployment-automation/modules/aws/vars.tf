@@ -19,7 +19,7 @@ variable "cidr" {
 variable "aws_region" {
   type        = string
   description = "The AWS region to deploy the infrastructure on"
-  default     = "us-west-2"
+  default     = "eu-central-1"
 }
 
 variable "vpc_tag" {
@@ -32,7 +32,7 @@ variable "vpc_tag" {
 
 variable "availability_zone" {
   description = "The AWS AZ to deploy the infrastructure on"
-  default     = ["us-west-2a", "us-west-2b", "us-west-2c"]
+  default     = ["eu-central-1a", "eu-central-1b", "eu-central-1c"]
   type        = list(string)
 }
 
