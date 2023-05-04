@@ -96,7 +96,7 @@ resource "aws_instance" "redpanda" {
   )
 
    provisioner "local-exec" {
-    command = "sleep 60 && ansible-playbook --private-key ~/.ssh/id_rsa -i ../hosts.ini -v ansible/provision-node.yml"
+    command = "sleep 60 && ansible-playbook --private-key ~/.ssh/id_rsa -i ../hosts.ini -v ansible/provision-node.yml -e skip_node=true --limit 'redpanda[5:]'"
   }
 
   connection {
@@ -142,7 +142,7 @@ resource "aws_instance" "prometheus" {
   )
 
    provisioner "local-exec" {
-    command = "sleep 60 && ansible-playbook --private-key ~/.ssh/id_rsa -i ../hosts.ini -v ansible/deploy-prometheus-grafana.yml"
+    command = "sleep 60 && ansible-playbook --private-key ~/.ssh/id_rsa -i ../hosts.ini -v ansible/deploy-prometheus-grafana.yml -e skip_node=true --limit 'monitor[1:]'"
   }
 
   connection {
